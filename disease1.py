@@ -3,13 +3,8 @@ import pandas as pd
 import numpy as np
 import joblib
 import io
-
 from datetime import datetime
-
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
+from fpdf import FPDF
 
 # ------------------------
 # Page Config
@@ -32,7 +27,7 @@ def load_disease_model():
 disease_model, le, model_columns = load_disease_model()
 
 # ------------------------
-# PDF Report Generator
+# PDF Generator (FPDF)
 # ------------------------
 def generate_pdf_report(
     age, weight, temperature, breed,
@@ -41,60 +36,65 @@ def generate_pdf_report(
     disease, confidence
 ):
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-
-    styles = getSampleStyleSheet()
-    elements = []
+    pdf = FPDF()
+    pdf.add_page()
 
     # Logo
     try:
-        logo = Image("petcare_logo.png", width=1.5*inch, height=1.5*inch)
-        elements.append(logo)
+        pdf.image("petcare_logo.png", x=80, y=8, w=50)
+        pdf.ln(30)
     except:
-        pass
+        pdf.ln(10)
 
-    elements.append(Paragraph("PetCare AI Veterinary Assistant", styles['Title']))
-    elements.append(Spacer(1, 10))
+    # Title
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "PetCare AI Veterinary Assistant", ln=True, align="C")
+    pdf.ln(5)
 
+    # Date & Time
+    pdf.set_font("Arial", "", 12)
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    elements.append(Paragraph(f"Diagnosis Date & Time: {current_time}", styles['Normal']))
-    elements.append(Spacer(1, 20))
+    pdf.cell(0, 10, f"Diagnosis Date & Time: {current_time}", ln=True)
+    pdf.ln(10)
 
-    data = [
-        ["Field", "Value"],
+    # Table-like layout
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(95, 8, "Field", border=1)
+    pdf.cell(95, 8, "Value", border=1, ln=True)
 
-        ["Age (years)", age],
-        ["Weight (kg)", weight],
-        ["Temperature (°C)", temperature],
-        ["Breed", breed],
-
-        ["Vomiting", vomiting],
-        ["Lethargy", lethargy],
-        ["Loss of Appetite", appetite_loss],
-        ["Skin Lesions", skin_lesions],
-        ["Breathing Difficulty", breathing_difficulty],
-        ["Joint Pain", joint_pain],
-
-        ["Predicted Disease", disease],
-        ["Confidence Level", f"{confidence:.2f}%"]
+    pdf.set_font("Arial", "", 12)
+    fields = [
+        ("Age (years)", age),
+        ("Weight (kg)", weight),
+        ("Temperature (°C)", temperature),
+        ("Breed", breed),
+        ("Vomiting", vomiting),
+        ("Lethargy", lethargy),
+        ("Loss of Appetite", appetite_loss),
+        ("Skin Lesions", skin_lesions),
+        ("Breathing Difficulty", breathing_difficulty),
+        ("Joint Pain", joint_pain),
+        ("Predicted Disease", disease),
+        ("Confidence Level", f"{confidence:.2f}%")
     ]
 
-    table = Table(data)
-    elements.append(table)
+    for field, value in fields:
+        pdf.cell(95, 8, str(field), border=1)
+        pdf.cell(95, 8, str(value), border=1, ln=True)
 
-    elements.append(Spacer(1, 20))
+    pdf.ln(10)
 
-    elements.append(Paragraph(
-        "⚠ Disclaimer: This report is generated using an AI prediction model. "
-        "Please consult a qualified veterinarian for accurate diagnosis.",
-        styles['Normal']
-    ))
+    # Disclaimer
+    pdf.set_font("Arial", "I", 10)
+    pdf.multi_cell(
+        0,
+        6,
+        "Disclaimer: This report is generated using an AI prediction model. "
+        "Please consult a qualified veterinarian for accurate diagnosis and treatment."
+    )
 
-    doc.build(elements)
-
-    buffer.seek(0)
-    return buffer
+    pdf_output = pdf.output(dest="S").encode("latin-1")
+    return io.BytesIO(pdf_output)
 
 # ------------------------
 # User Inputs
@@ -158,9 +158,7 @@ if st.button("Predict Disease"):
 
     st.warning("⚠ This is an AI-based prediction. Please consult a veterinarian.")
 
-    # ------------------------
     # Generate PDF
-    # ------------------------
     pdf = generate_pdf_report(
         age, weight, temperature, breed,
         vomiting, lethargy, appetite_loss,
