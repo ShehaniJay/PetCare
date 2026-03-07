@@ -156,7 +156,7 @@ if st.button("Predict Disease"):
     st.success(f"Predicted Disease: {pred_class_label}")
     st.info(f"Confidence Level: {probability*100:.2f}%")
 
-    st.warning("⚠ This is an AI-based prediction. Please consult a veterinarian.")
+    st.warning("This is an AI-based prediction. Please consult a veterinarian.")
 
     # Generate PDF
     pdf = generate_pdf_report(
