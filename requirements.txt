@@ -4,4 +4,4 @@ numpy
 pillow
 joblib
 scikit-learn
-reportlab==3.6.13
+fpdf
