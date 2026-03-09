@@ -3,5 +3,7 @@ numpy
 pillow
 joblib
 scikit-learn
+tensorflow
 fpdf
+
 
