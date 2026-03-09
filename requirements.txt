@@ -4,6 +4,7 @@ pillow
 joblib
 scikit-learn
 fpdf
+reportlab
 
 
 
